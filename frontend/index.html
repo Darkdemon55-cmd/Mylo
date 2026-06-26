@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MYLO - Agentic AI Financial Intelligence Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.fontsource.org/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #050505;
+            --bg-secondary: #111111;
+            --bg-tertiary: #0B0B0B;
+            --border-color: #222222;
+            --text-primary: #FFFFFF;
+            --text-secondary: #BFBFBF;
+            --accent-success: #00FF88;
+            --accent-error: #FF4D4D;
+            --panel-width-left: 28%;
+            --panel-width-center: 44%;
+            --panel-width-right: 28%;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: var(--panel-width-left) var(--panel-width-center) var(--panel-width-right);
+            height: 100vh;
+            gap: 1px;
+        }
+
+        .panel {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            background-color: var(--bg-tertiary);
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            position: relative;
+            text-align: center;
+            animation: melt 3s ease-in-out infinite alternate;
+        }
+
+        .logo::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent);
+            filter: blur(2px);
+        }
+
+        @keyframes melt {
+            0% {
+                transform: translateY(0);
+                text-shadow: 0 0 8px rgba(255,255,255,0.3);
+            }
+            100% {
+                transform: translateY(2px);
+                text-shadow: 0 2px 10px rgba(255,255,255,0.2);
+            }
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .input-area {
+            padding: 16px;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--bg-tertiary);
+        }
+
+        .chat-message {
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            background-color: var(--bg-tertiary);
+            position: relative;
+            border-left: 3px solid var(--accent-success);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .agent-tag {
+            background-color: rgba(0, 255, 136, 0.2);
+            color: var(--accent-success);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-right: 8px;
+        }
+
+        .typing-indicator {
+            display: inline-block;
+            width: 60px;
+            height: 16px;
+        }
+
+        .typing-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-secondary);
+            margin-right: 4px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+
+        .editor-container {
+            height: 100%;
+            position: relative;
+        }
+
+        #editor {
+            width: 100%;
+            height: calc(100% - 60px);
+        }
+
+        .editor-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 16px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--accent-success);
+        }
+
+        .editor-actions {
+            padding: 16px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background-color: var(--bg-tertiary);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-success);
+            color: var(--bg-primary);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .metric-card {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .metric-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chart-container {
+            height: 200px;
+            margin: 16px 0;
+            position: relative;
+        }
+
+        .risk-alert {
+            background-color: rgba(255, 77, 77, 0.1);
+            border: 1px solid var(--accent-error);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .alert-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .alert-icon {
+            color: var(--accent-error);
+            margin-right: 8px;
+        }
+
+        .status-bar {
+            padding: 8px 16px;
+            background-color: var(--bg-tertiary);
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .model-selector {
+            padding: 8px;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+
+        .debate-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .debate-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .debate-card {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 12px;
+        }
+
+        .consensus-score {
+            background-color: rgba(0, 255, 136, 0.1);
+            border: 1px solid var(--accent-success);
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .panel {
+                border: 1px solid var(--border-color);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- LEFT PANEL - CHAT / AI BRAIN -->
+        <div class="panel">
+            <div class="header">
+                <div class="logo-container">
+                    <div class="logo">MYLO</div>
+                </div>
+            </div>
+            <div class="content">
+                <select class="model-selector">
+                    <option>GPT-5 (Accuracy)</option>
+                    <option>Claude Opus 4.7 (Reasoning)</option>
+                    <option>Llama 4 (Open Source)</option>
+                    <option>Mistral 8x22B (Speed)</option>
+                    <option>DeepSeek R1 (Quant)</option>
+                </select>
+                
+                <div class="chat-message">
+                    <div class="message-header">
+                        <span class="agent-tag">ORCHESTRATOR</span>
+                        <span>GPT-5</span>
+                    </div>
+                    <div>I've decomposed your request into specialized tasks. The Coding Agent will generate the strategy, the Quant Agent will run simulations, and the Review Agent will validate safety.</div>
+                </div>
+                
+                <div class="chat-message">
+                    <div class="message-header">
+                        <span class="agent-tag">CODING</span>
+                        <span>Llama 4</span>
+                    </div>
+                    <div>Generated trading strategy for Bitcoin momentum. The code includes position sizing, stop losses, and risk management.</div>
+                </div>
+                
+                <div class="chat-message">
+                    <div class="message-header">
+                        <span class="agent-tag">QUANT</span>
+                        <span>DeepSeek R1</span>
+                    </div>
+                    <div>Completed Monte Carlo simulation with 10,000 scenarios. Sharpe ratio: 1.25, Max Drawdown: 15.2%</div>
+                </div>
+                
+                <div class="chat-message">
+                    <div class="message-header">
+                        <span class="agent-tag">REVIEW</span>
+                        <span>Claude Opus</span>
+                    </div>
+                    <div>Strategy approved for paper trading. Risk metrics are within acceptable limits. Ready for deployment.</div>
+                </div>
+                
+                <div class="chat-message">
+                    <div class="message-header">
+                        <span class="agent-tag">SYSTEM</span>
+                        <span>MYLO</span>
+                    </div>
+                    <div class="typing-indicator">
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="input-area">
+                <textarea placeholder="Ask MYLO to build a trading strategy, perform analysis, or optimize parameters..." style="width: 100%; padding: 12px; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px; resize: none; height: 80px;"></textarea>
+                <button class="btn btn-primary" style="margin-top: 8px; width: 100%;">Send to AI Brain</button>
+            </div>
+        </div>
+
+        <!-- CENTER PANEL - CODE + STRATEGY ENGINE -->
+        <div class="panel">
+            <div class="header">
+                <div class="logo-container">
+                    <div class="logo">MYLO</div>
+                </div>
+            </div>
+            <div class="editor-tabs">
+                <div class="tab active">strategy.py</div>
+                <div class="tab">backtest.py</div>
+                <div class="tab">risk.py</div>
+            </div>
+            <div class="content">
+                <div class="editor-container">
+                    <div id="editor">import numpy as np
+import pandas as pd
+from vectorbt import Portfolio
+import talib
+
+class BitcoinMomentumStrategy:
+    def __init__(self, initial_capital=10000, risk_per_trade=0.02):
+        self.initial_capital = initial_capital
+        self.risk_per_trade = risk_per_trade
+        self.position_size = None
+        
+    def calculate_signals(self, df):
+        # Momentum indicators
+        df['rsi'] = talib.RSI(df['close'], timeperiod=14)
+        df['macd'], df['macd_signal'], _ = talib.MACD(df['close'])
+        
+        # Entry conditions
+        df['long_condition'] = (
+            (df['rsi'] > 30) & 
+            (df['macd'] > df['macd_signal']) & 
+            (df['close'] > df['close'].shift(1))
+        )
+        
+        df['short_condition'] = (
+            (df['rsi'] < 70) & 
+            (df['macd'] < df['macd_signal']) & 
+            (df['close'] < df['close'].shift(1))
+        )
+        
+        return df
+    
+    def position_sizing(self, price, atr, account_balance):
+        # ATR-based position sizing
+        risk_amount = account_balance * self.risk_per_trade
+        position_size = risk_amount / (atr * 2)  # 2x ATR stop
+        return min(position_size, account_balance * 0.1)  # Max 10% position
+
+    def run_simulation(self, data, num_simulations=1000):
+        results = []
+        for i in range(num_simulations):
+            # Randomized parameters for Monte Carlo
+            risk_param = np.random.uniform(0.01, 0.05)
+            rsi_param = np.random.uniform(25, 35)
+            
+            # Run strategy with randomized params
+            temp_strategy = BitcoinMomentumStrategy(risk_per_trade=risk_param)
+            # Simulation logic here...
+            
+            # Record results
+            result = {
+                'sharpe': np.random.uniform(0.8, 1.8),
+                'drawdown': np.random.uniform(0.1, 0.25),
+                'return': np.random.uniform(0.15, 0.35)
+            }
+            results.append(result)
+            
+        return results</div>
+                    
+                    <div class="status-bar">
+                        <span>Python 3.11 | NumPy, Pandas, vectorbt</span>
+                        <span>Risk Score: 2.4/10</span>
+                    </div>
+                </div>
+            </div>
+            <div class="editor-actions">
+                <button class="btn btn-secondary">Save</button>
+                <button class="btn btn-secondary">Backtest</button>
+                <button class="btn btn-primary">Deploy to Paper Trading</button>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL - REVIEW + ANALYTICS -->
+        <div class="panel">
+            <div class="header">
+                <div class="logo-container">
+                    <div class="logo">MYLO</div>
+                </div>
+            </div>
+            <div class="content">
+                <div class="metric-card">
+                    <div class="metric-title">SHARPE RATIO</div>
+                    <div class="metric-value">1.25</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title">MAX DRAWDOWN</div>
+                    <div class="metric-value">15.2%</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title">WIN RATE</div>
+                    <div class="metric-value">62.4%</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title">PROFIT FACTOR</div>
+                    <div class="metric-value">1.87</div>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="equityCurve" width="400" height="200"></canvas>
+                </div>
+                
+                <div class="risk-alert">
+                    <div class="alert-header">
+                        <span class="alert-icon">⚠️</span>
+                        <strong>Risk Alert</strong>
+                    </div>
+                    <div>Strategy shows elevated correlation to market beta during volatile periods. Consider adding diversification measures.</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-title">VALUE AT RISK (95%)</div>
+                    <div class="metric-value">$1,240</div>
+                </div>
+                
+                <div class="debate-section">
+                    <h3 style="margin-bottom: 12px;">Multi-Model Debate</h3>
+                    <div class="debate-cards">
+                        <div class="debate-card">
+                            <div><strong>GPT-5</strong></div>
+                            <div>Aggressive entry signals, high Sharpe potential</div>
+                            <div style="color: var(--accent-success);">Score: 8.5/10</div>
+                        </div>
+                        <div class="debate-card">
+                            <div><strong>Claude Opus</strong></div>
+                            <div>Conservative risk management, lower drawdown</div>
+                            <div style="color: var(--accent-success);">Score: 8.2/10</div>
+                        </div>
+                        <div class="debate-card">
+                            <div><strong>DeepSeek R1</strong></div>
+                            <div>Statistical validation confirms robustness</div>
+                            <div style="color: var(--accent-success);">Score: 8.7/10</div>
+                        </div>
+                    </div>
+                    
+                    <div class="consensus-score">
+                        <div><strong>Weighted Consensus: 8.4/10</strong></div>
+                        <div>Strategy approved for paper trading</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Monaco Editor
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
+        
+        require(['vs/editor/editor.main'], function() {
+            var editor = monaco.editor.create(document.getElementById('editor'), {
+                value: document.getElementById('editor').textContent,
+                language: 'python',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                fontSize: 14,
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                fontFamily: 'JetBrains Mono'
+            });
+            
+            // Add custom theme for financial terminal look
+            monaco.editor.defineTheme('financial-dark', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [],
+                colors: {
+                    'editor.background': '#0B0B0B',
+                    'editor.lineHighlightBackground': '#111111',
+                    'editorCursor.foreground': '#00FF88'
+                }
+            });
+            
+            editor.updateOptions({ theme: 'financial-dark' });
+        });
+
+        // Simple equity curve visualization
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('equityCurve');
+            const ctx = canvas.getContext('2d');
+            
+            // Draw a sample equity curve
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height - 20);
+            
+            let x = 0;
+            let y = canvas.height - 20;
+            
+            // Simulate equity curve with some randomness
+            for (let i = 0; i < 400; i += 10) {
+                const newY = y - (Math.random() - 0.4) * 4;
+                // Keep within bounds
+                if (newY < 20) y = 20;
+                else if (newY > canvas.height - 20) y = canvas.height - 20;
+                else y = newY;
+                
+                ctx.lineTo(i, y);
+                x = i;
+            }
+            
+            ctx.strokeStyle = '#00FF88';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw axes
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height - 20);
+            ctx.lineTo(canvas.width, canvas.height - 20);
+            ctx.moveTo(0, 20);
+            ctx.lineTo(0, canvas.height);
+            ctx.strokeStyle = '#222222';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        });
+
+        // Simulate typing indicators and dynamic updates
+        setInterval(() => {
+            const typingElements = document.querySelectorAll('.typing-indicator');
+            typingElements.forEach(el => {
+                if (Math.random() > 0.7) {
+                    el.style.display = 'inline-block';
+                    setTimeout(() => {
+                        el.innerHTML = '<div>Processing market data...</div>';
+                    }, 1000);
+                }
+            });
+        }, 5000);
+
+        // Simulate real-time metric updates
+        setInterval(() => {
+            const sharpeElement = document.querySelector('.metric-value');
+            if (sharpeElement && Math.random() > 0.9) {
+                const current = parseFloat(sharpeElement.textContent);
+                const change = (Math.random() - 0.5) * 0.1;
+                sharpeElement.textContent = (current + change).toFixed(2);
+            }
+        }, 3000);
+    </script>
+</body>
+                      </html>
